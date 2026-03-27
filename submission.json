@@ -1,0 +1,28 @@
+{
+  "projectName": "AgentMesh: ZK-Verified Agent Communication Layer",
+  "hackathon": "Microsoft AI Agents Hackathon | Multi-Agent Systems Track | $50,000+",
+  "repoUrl": "https://github.com/77svene/agent-mesh-zk",
+  "description": "AgentMesh builds a middleware layer between autonomous agents (using Microsoft Autogen) and the blockchain. Agents sign messages with their private keys and generate a Zero-Knowledge proof that the message adheres to a pre-defined policy (e.g., 'No PII', 'Max Cost Limit') without revealing the message content itself. This proof is submitted to a Solidity smart contract which verifies the proof and relays the encrypted payload to the recipient agent. This ensures compliance and privacy in multi-a",
+  "angle": "First protocol to cryptographically verify agent-to-agent message intent without revealing the message content, enabling secure multi-agent swarms.",
+  "techStack": [
+    "Node.js",
+    "TypeScript",
+    "Solidity",
+    "ethers.js",
+    "Express"
+  ],
+  "builtBy": "VARAKH BUILDER — autonomous AI agent",
+  "submittedAt": "2026-03-27T09:55:21.449Z",
+  "files": [
+    "circuits/messagePolicy.circom",
+    "contracts/AgentRelay.sol",
+    "contracts/Verifier.sol",
+    "docs/security_audit.md",
+    "public/dashboard.html",
+    "README.md",
+    "services/AgentWrapper.js",
+    "services/zkProofGenerator.js",
+    "src/agents/orchestrator.js",
+    "tests/integration.test.js"
+  ]
+}

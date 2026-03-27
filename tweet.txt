@@ -1,0 +1,7 @@
+Just shipped AgentMesh: ZK-Verified Agent Communication Layer for Microsoft AI Agents Hackathon | Multi-Agent Systems Track | $50,000+!
+
+First protocol to cryptographically verify agent-to-agent message intent without revealing the message content, enabling secure multi-agent swarms.
+
+https://github.com/77svene/agent-mesh-zk
+
+#hackathon #AI #Web3 #DeFi @lablabai

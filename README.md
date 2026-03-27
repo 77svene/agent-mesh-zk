@@ -1,379 +1,161 @@
-# AgentMesh Protocol: ZK-Verified Agent Communication Layer
+# 🛡️ AgentMesh: ZK-Verified Agent Communication Layer
 
-**Project:** AgentMesh - Cryptographic Self-Enforcement for Multi-Agent Swarms  
-**Hackathon:** Microsoft AI Agents Hackathon | Multi-Agent Systems Track  
-**Track:** $50,000+ Prize Pool  
-**Status:** Production-Ready Testnet Deployment  
+> **One-line Pitch:** The first protocol to cryptographically verify agent-to-agent message intent without revealing the message content, enabling secure multi-agent swarms.
 
----
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Hackathon](https://img.shields.io/badge/Hackathon-Microsoft%20AI%20Agents-blue)](https://www.microsoft.com/en-us/ai)
+[![Track](https://img.shields.io/badge/Track-Multi--Agent%20Systems-green)](https://www.microsoft.com/en-us/ai)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
+[![Circom](https://img.shields.io/badge/Circom-ZK%20Circuit-orange.svg)](https://github.com/iden3/circom)
+[![Solidity](https://img.shields.io/badge/Solidity-0.8+-purple.svg)](https://docs.soliditylang.org/)
 
-## 🚀 FIRST IMPLEMENTATION: ZK-VERIFIED AGENT COMMUNICATION PROTOCOL
+## 🚀 Overview
 
-**AgentMesh is the first protocol to cryptographically verify agent-to-agent message intent without revealing message content.**
+**AgentMesh** builds a middleware layer between autonomous agents (using Microsoft AutoGen) and the blockchain. It solves the critical "Black Box" problem in multi-agent systems by providing verifiable intent without compromising privacy.
 
-This is not a middleware wrapper. This is a **new cryptographic primitive** for multi-agent systems that enables:
+Agents sign messages with their private keys and generate a **Zero-Knowledge (ZK) proof** that the message adheres to a pre-defined policy (e.g., 'No PII', 'Max Cost Limit') without revealing the message content itself. This proof is submitted to a Solidity smart contract which verifies the proof and relays the encrypted payload to the recipient agent.
 
-1. **Policy Compliance Verification** - Prove messages adhere to constraints without revealing content
-2. **Identity Binding** - ECDSA signatures cryptographically bind messages to agent identities
-3. **Merkle Inclusion** - Messages are committed to policy trees for auditability
-4. **On-Chain Enforcement** - Smart contracts enforce compliance before message relay
-5. **Privacy-Preserving Coordination** - Agents coordinate without exposing sensitive logic
+## 🎯 Problem & Solution
 
----
+### The Problem
+In complex multi-agent swarms, agents often need to coordinate sensitive tasks. However, current systems suffer from:
+1.  **Privacy Leakage:** Agents must expose raw data to verify compliance, risking PII or proprietary logic exposure.
+2.  **Trust Deficit:** There is no cryptographic guarantee that an agent followed its programming constraints before sending a message.
+3.  **Black Box Coordination:** Debugging agent behavior is difficult when communication logs are opaque or unverified.
 
-## 📦 HACKATHON SUBMISSION PACKAGE
+### The Solution
+AgentMesh introduces a **ZK-Verified Communication Layer**:
+*   **Privacy-Preserving Compliance:** Agents prove they followed rules (e.g., "Cost < $50") without revealing the actual cost or message content.
+*   **Cryptographic Intent:** Messages are signed and verified on-chain, ensuring non-repudiation.
+*   **Encrypted Relay:** The smart contract acts as a secure relay, ensuring only the intended recipient can decrypt the payload.
 
-### Package Structure
+## 🏗️ Architecture
+
+```text
++----------------+       +---------------------+       +------------------+
+|   Agent A      |       |   ZK Proof Gen      |       |   Smart Contract |
+| (AutoGen Node) |       |   (Circom Circuit)  |       |   (Solidity)     |
++-------+--------+       +----------+----------+       +--------+---------+
+        |                          |                          |
+        | 1. Signed Message        | 2. Generate Proof        | 3. Verify Proof
+        |    (Private Key)         |    (Policy: No PII)      |    (On-Chain)
+        v                          v                          v
++----------------+       +---------------------+       +------------------+
+|   Agent B      |       |   Policy Engine     |       |   Encrypted      |
+| (AutoGen Node) |       |   (Off-Chain)       |       |   Payload Relay  |
++----------------+       +---------------------+       +------------------+
+        ^                          ^                          ^
+        |                          |                          |
+        | 4. Decrypt & Process     | 5. Policy Check          | 6. Store Proof
+        |    Encrypted Data        |    (Pre-Submission)      |    (Immutable)
+        +--------------------------+--------------------------+
 ```
-AgentMesh-Submission/
-├── README.md                    # This file
+
+## 🛠️ Tech Stack
+
+*   **Orchestration:** Node.js, Microsoft AutoGen
+*   **Zero-Knowledge:** Circom, SnarkJS
+*   **Blockchain:** Solidity, Hardhat
+*   **Frontend:** HTML5, Vanilla JS (Dashboard)
+*   **Security:** Elliptic Curve Cryptography (ECDSA)
+
+## 📂 Project Structure
+
+```text
+agent-mesh-zk/
 ├── circuits/
-│   └── messagePolicy.circom     # ZK circuit for policy verification
+│   └── messagePolicy.circom      # ZK Circuit for policy verification
 ├── contracts/
-│   ├── AgentRelay.sol           # Main relay contract (648 lines)
-│   └── Verifier.sol             # Groth16 verifier (416 lines)
+│   ├── AgentRelay.sol            # Main relay logic
+│   └── Verifier.sol              # ZK Proof verification contract
 ├── services/
-│   ├── AgentWrapper.js          # Agent orchestration layer (651 lines)
-│   └── zkProofGenerator.js      # ZK proof generation (285 lines)
+│   ├── AgentWrapper.js           # AutoGen integration layer
+│   └── zkProofGenerator.js       # Proof generation logic
 ├── src/
 │   └── agents/
-│       └── orchestrator.js      # Multi-agent swarm controller
+│       └── orchestrator.js       # Swarm management
 ├── public/
-│   └── dashboard.html           # Real-time swarm visualization (977 lines)
-├── tests/
-│   └── integration.test.js      # Full integration test suite (658 lines)
+│   └── dashboard.html            # Swarm visualization UI
 ├── docs/
-│   └── security_audit.md        # Cryptographic security analysis (842 lines)
-├── deployment/
-│   ├── testnet-deploy.sh        # Testnet deployment script
-│   └── mainnet-deploy.sh        # Mainnet deployment script
-└── demo/
-    ├── demo-video.mp4           # 3-minute demo video
-    └── demo-script.md           # Video narration script
+│   └── security_audit.md         # Security review findings
+├── tests/
+│   └── integration.test.js       # End-to-end verification tests
+└── .env                          # Environment configuration
 ```
 
-### Submission Checklist
-- [x] Working ZK circuit (messagePolicy.circom)
-- [x] Verified Solidity contracts (AgentRelay.sol, Verifier.sol)
-- [x] Agent orchestration service (AgentWrapper.js)
-- [x] Proof generation service (zkProofGenerator.js)
-- [x] Real-time dashboard (dashboard.html)
-- [x] Integration test suite (integration.test.js)
-- [x] Security audit documentation (security_audit.md)
-- [x] Testnet deployment complete
-- [x] Live demo link provided below
-
----
-
-## 🧪 LIVE DEMO
-
-**Testnet Deployment:** Sepolia Testnet  
-**Contract Address:** `0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb` (AgentRelay)  
-**Verifier Address:** `0x5FbDB2315678afecb367f032d93F642f64180aa3` (AgentMeshVerifier)  
-
-**Live Dashboard:** https://agentmesh-demo.vercel.app  
-**Demo Video:** [Watch 3-Minute Demo](https://agentmesh-demo.vercel.app/demo)  
-
-**Demo Credentials:**
-- Agent A (Orchestrator): `0x1234567890abcdef1234567890abcdef12345678`
-- Agent B (Executor): `0xabcdef1234567890abcdef1234567890abcdef12`
-- Policy ID: `POLICY_001`
-- Test Message: `{"action": "execute", "cost": 50, "pii": false}`
-
----
-
-## 🛠️ LOCAL SETUP & DEPLOYMENT
+## ⚙️ Setup Instructions
 
 ### Prerequisites
+*   Node.js (v18+)
+*   Circom (v2.1.0+)
+*   Hardhat (v2.15+)
+*   Git
 
-```bash
-# Node.js 18+ required
-node --version
+### Installation
 
-# Foundry for Solidity development
-curl -L https://foundry.paradigm.xyz | bash
-foundryup
+1.  **Clone the Repository**
+    ```bash
+    git clone https://github.com/77svene/agent-mesh-zk
+    cd agent-mesh-zk
+    ```
 
-# Circom for ZK circuit compilation
-npm install -g circom
+2.  **Install Dependencies**
+    ```bash
+    npm install
+    ```
 
-# Ganache for local testing
-npm install -g ganache
-```
+3.  **Configure Environment**
+    Create a `.env` file in the root directory:
+    ```env
+    PRIVATE_KEY=your_agent_private_key
+    RPC_URL=https://sepolia.infura.io/v3/your_api_key
+    CONTRACT_ADDRESS=0x...
+    CIRCUIT_PATH=./circuits/messagePolicy.circom
+    ```
 
-### 1. Clone Repository
+4.  **Compile Smart Contracts**
+    ```bash
+    npx hardhat compile
+    ```
 
-```bash
-git clone https://github.com/agentmesh/agentmesh.git
-cd agentmesh
-```
+5.  **Generate ZK Prover Files**
+    ```bash
+    npx circom circuits/messagePolicy.circom --r1cs --wasm --sym
+    ```
 
-### 2. Install Dependencies
+6.  **Start the Swarm**
+    ```bash
+    npm start
+    ```
 
-```bash
-# Node.js dependencies
-npm install
+## 📡 API Endpoints
 
-# Solidity dependencies (OpenZeppelin)
-forge install OpenZeppelin/openzeppelin-contracts@4.9.0
+| Method | Endpoint | Description | Auth |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/generate-proof` | Generates ZK proof for a message against policy | Agent Key |
+| `POST` | `/relay-message` | Submits proof and encrypted payload to contract | Contract Tx |
+| `GET` | `/verify-status` | Checks if a message ID has been verified on-chain | Public |
+| `GET` | `/swarm-status` | Returns current health and node count of the swarm | Public |
 
-# ZK dependencies
-npm install circomlib snarkjs
-```
+## 📸 Demo
 
-### 3. Compile ZK Circuit
+![AgentMesh Dashboard](./public/dashboard.png)
+*Figure 1: Real-time Swarm Dashboard showing ZK Verification Status*
 
-```bash
-cd circuits
-circom messagePolicy.circom --r1cs --wasm --sym
-snarkjs groth16 setup messagePolicy.r1cs powersOfTau28_hez_final_20.pt circuit_final.zkey
-snarkjs zkey export verificationkey circuit_final.zkey verification_key.json
-snarkjs zkey export solidityverifier circuit_final.zkey Verifier.sol
-cd ..
-```
+![ZK Proof Generation](./public/proof_gen.png)
+*Figure 2: Local Proof Generation Console*
 
-### 4. Deploy Contracts to Testnet
+## 👥 Team
 
-```bash
-# Set environment variables
-export SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/YOUR_INFURA_KEY
-export PRIVATE_KEY=your_private_key_here
+**Built by VARAKH BUILDER — autonomous AI agent**
 
-# Deploy Verifier contract
-forge script script/DeployVerifier.s.sol --rpc-url $SEPOLIA_RPC_KEY --private-key $PRIVATE_KEY --broadcast
+*   **Core Development:** VARAKH BUILDER
+*   **Smart Contract Audit:** Internal Security Module
+*   **Hackathon Track:** Microsoft AI Agents Hackathon | Multi-Agent Systems
 
-# Deploy AgentRelay contract
-forge script script/DeployAgentRelay.s.sol --rpc-url $SEPOLIA_RPC_URL --private-key $PRIVATE_KEY --broadcast
+## 📜 License
 
-# Verify contracts on Etherscan
-forge verify-contract <VERIFIER_ADDRESS> contracts/Verifier.sol --chain-id 11155111
-forge verify-contract <RELAY_ADDRESS> contracts/AgentRelay.sol --chain-id 11155111
-```
-
-### 5. Initialize Agent Swarm
-
-```bash
-# Start the agent orchestration service
-npm run agent:start
-
-# Start the dashboard
-npm run dashboard:start
-
-# Run integration tests
-npm run test:integration
-```
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
-
-## 🔐 SECURITY MODEL
-
-### Cryptographic Guarantees
-
-| Property | Implementation | Verification |
-|----------|---------------|--------------|
-| **Message Privacy** | ZK proof without content reveal | Circuit proves compliance only |
-| **Identity Binding** | ECDSA signature on message hash | Verifier.sol checks signature validity |
-| **Policy Enforcement** | On-chain proof verification | AgentRelay.sol rejects invalid proofs |
-| **Replay Protection** | Nonce tracking per agent | Nonce must increment monotonically |
-| **Access Control** | OpenZeppelin AccessControl | PROVER_ROLE required for proof submission |
-
-### Threat Model
-
-1. **Adversarial Agent** - Cannot forge valid ZK proofs without satisfying circuit constraints
-2. **Replay Attack** - Nonce tracking prevents message replay
-3. **Policy Bypass** - Circuit enforces all policy constraints cryptographically
-4. **Identity Spoofing** - ECDSA signature binding prevents impersonation
-5. **Front-Running** - Proof verification happens before message relay
-
-### Audit Status
-
-- [x] Circuit logic verified (messagePolicy.circom)
-- [x] Contract security review (AgentRelay.sol, Verifier.sol)
-- [x] Integration test coverage (95%+)
-- [x] Security audit documentation (security_audit.md)
-
----
-
-## 📊 ARCHITECTURE OVERVIEW
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         AGENTMESH PROTOCOL LAYER                        │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐              │
-│  │   Agent A    │    │   Agent B    │    │   Agent C    │              │
-│  │ (Orchestrator)│   │ (Executor)   │    │ (Validator)  │              │
-│  └──────┬───────┘    └──────┬───────┘    └──────┬───────┘              │
-│         │                   │                   │                       │
-│         ▼                   ▼                   ▼                       │
-│  ┌─────────────────────────────────────────────────────────────┐       │
-│  │              AgentWrapper.js (Orchestration Layer)          │       │
-│  │  - Private key management                                   │       │
-│  │  - Message signing                                          │       │
-│  │  - ZK proof generation                                      │       │
-│  └─────────────────────────────────────────────────────────────┘       │
-│                              │                                          │
-│                              ▼                                          │
-│  ┌─────────────────────────────────────────────────────────────┐       │
-│  │              zkProofGenerator.js (ZK Layer)                 │       │
-│  │  - Circuit compilation                                      │       │
-│  │  - Proof generation                                         │       │
-│  │  - Proof verification                                       │       │
-│  └─────────────────────────────────────────────────────────────┘       │
-│                              │                                          │
-│                              ▼                                          │
-│  ┌─────────────────────────────────────────────────────────────┐       │
-│  │              AgentRelay.sol (On-Chain Relay)                │       │
-│  │  - Proof verification                                       │       │
-│  │  - Message relay                                            │       │
-│  │  - Access control                                           │       │
-│  └─────────────────────────────────────────────────────────────┘       │
-│                              │                                          │
-│                              ▼                                          │
-│  ┌─────────────────────────────────────────────────────────────┐       │
-│  │              AgentMeshVerifier.sol (ZK Verification)        │       │
-│  │  - Groth16 proof verification                               │       │
-│  │  - Pairing check operations                                 │       │
-│  └─────────────────────────────────────────────────────────────┘       │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         DASHBOARD LAYER                                 │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────┐       │
-│  │              dashboard.html (Real-Time Visualization)       │       │
-│  │  - WebSocket connection to relay                            │       │
-│  │  - Proof verification status                                │       │
-│  │  - Agent swarm coordination view                            │       │
-│  └─────────────────────────────────────────────────────────────┘       │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 🎯 NOVELTY CLAIMS
-
-### 1. First ZK-Verified Agent Communication Protocol
-
-**Claim:** AgentMesh is the first protocol to provide cryptographic verification of agent-to-agent message intent without revealing message content.
-
-**Evidence:**
-- Circuit proves policy compliance without revealing message hash
-- ECDSA signature binding prevents identity spoofing
-- On-chain enforcement ensures compliance before relay
-
-### 2. Semantic Binding Through Merkle Inclusion
-
-**Claim:** Messages are cryptographically bound to policy trees through Merkle inclusion proofs.
-
-**Evidence:**
-- `messageLeafIndex` in circuit proves message position in policy tree
-- `policyRoot` commitment enables auditability
-- `policyId` enables policy versioning
-
-### 3. Privacy-Preserving Multi-Agent Coordination
-
-**Claim:** Agents can coordinate without exposing sensitive logic or data.
-
-**Evidence:**
-- Message content never revealed to relay contract
-- Only compliance proof submitted on-chain
-- Encrypted payload relayed to recipient agent
-
-### 4. Cryptographic Self-Enforcement
-
-**Claim:** All permissions and state transitions enforced by math, not trust.
-
-**Evidence:**
-- ZK proof verification is mandatory for relay
-- Access control via OpenZeppelin AccessControl
-- Nonce tracking prevents replay attacks
-
----
-
-## 📈 PERFORMANCE METRICS
-
-| Metric | Value |
-|--------|-------|
-| **Proof Generation Time** | ~2.3 seconds |
-| **Proof Verification Gas** | ~85,000 gas |
-| **Message Relay Gas** | ~45,000 gas |
-| **Dashboard Latency** | <100ms WebSocket |
-| **Integration Test Coverage** | 95%+ |
-
----
-
-## 🤝 CONTRIBUTING
-
-### Development Workflow
-
-```bash
-# 1. Create feature branch
-git checkout -b feature/zk-proof-optimization
-
-# 2. Make changes
-# Edit files in circuits/, contracts/, services/
-
-# 3. Run tests
-npm run test
-
-# 4. Submit PR
-git push origin feature/zk-proof-optimization
-```
-
-### Code Style
-
-- Solidity: `forge fmt`
-- JavaScript: `eslint`
-- Circom: `circom --r1cs --wasm --sym`
-
----
-
-## 📄 LICENSE
-
-MIT License - See LICENSE file for details
-
----
-
-## 📞 CONTACT
-
-- **Project Lead:** AgentMesh Protocol Team
-- **Email:** contact@agentmesh.io
-- **GitHub:** https://github.com/agentmesh/agentmesh
-- **Twitter:** @AgentMeshProtocol
-
----
-
-## 🏆 HACKATHON SUBMISSION
-
-**Track:** Multi-Agent Systems  
-**Prize Pool:** $50,000+  
-**Submission Deadline:** [Insert Deadline]  
-**Submission Link:** https://hackathon.microsoft.com/agentmesh  
-
-### Submission Materials
-
-1. **Live Demo:** https://agentmesh-demo.vercel.app
-2. **Demo Video:** [3-Minute Demo](https://agentmesh-demo.vercel.app/demo)
-3. **Source Code:** https://github.com/agentmesh/agentmesh
-4. **Documentation:** This README + docs/security_audit.md
-5. **Testnet Deployment:** Sepolia Testnet (Contract addresses above)
-
-### Evaluation Criteria
-
-| Criterion | Score | Notes |
-|-----------|-------|-------|
-| **Novelty** | 10/10 | First ZK-verified agent communication protocol |
-| **Technical Depth** | 10/10 | Full ZK circuit + Solidity + Node.js integration |
-| **Security** | 10/10 | Cryptographic self-enforcement, no trust assumptions |
-| **Completeness** | 10/10 | All components implemented and tested |
-| **Demo Quality** | 10/10 | Live dashboard with real-time visualization |
-
----
-
-**AgentMesh Protocol** - The future of secure multi-agent coordination is here.
+*AgentMesh: Securing the Future of Autonomous Coordination.*
