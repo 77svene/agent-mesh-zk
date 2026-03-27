@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgentMesh Swarm Dashboard | ZK-Verified Communication Layer</title>
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-tertiary: #1f2937;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border-color: #374151;
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            --glow-primary: 0 0 20px rgba(59, 130, 246, 0.3);
+            --glow-success: 0 0 20px rgba(16, 185, 129, 0.3);
+            --font-mono: 'SF Mono', 'Fira Code', 'Monaco', monospace;
+            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 320px 1fr 320px;
+            grid-template-rows: auto 1fr auto;
+            gap: 1px;
+            background: var(--border-color);
+            min-height: 100vh;
+        }
+
+        .header {
+            grid-column: 1 / -1;
+            background: var(--bg-secondary);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+            font-family: var(--font-mono);
+        }
+
+        .stat-value.success { color: var(--success); }
+        .stat-value.warning { color: var(--warning); }
+        .stat-value.danger { color: var(--danger); }
+
+        .sidebar {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .sidebar-section {
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+        }
+
+        .agent-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            transition: all 0.2s ease;
+        }
+
+        .agent-card:hover {
+            border-color: var(--accent-primary);
+            box-shadow: var(--glow-primary);
+        }
+
+        .agent-card.active {
+            border-color: var(--success);
+            box-shadow: var(--glow-success);
+        }
+
+        .agent-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .agent-name {
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .agent-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+        }
+
+        .agent-status.active { background: var(--success); }
+        .agent-status.idle { background: var(--warning); }
+        .agent-status.error { background: var(--danger); }
+
+        .agent-details {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+        }
+
+        .agent-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .agent-stat {
+            text-align: center;
+        }
+
+        .agent-stat-value {
+            font-size: 0.875rem;
+            font-weight: 600;
+            font-family: var(--font-mono);
+        }
+
+        .agent-stat-label {
+            font-size: 0.625rem;
+            color: var(--text-secondary);
+        }
+
+        .main-content {
+            background: var(--bg-primary);
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .flow-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .flow-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .flow-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .flow-title .icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+        }
+
+        .message-flow {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .message-node {
+            flex: 1;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            min-width: 120px;
+        }
+
+        .message-node.sender {
+            border-color: var(--accent-primary);
+        }
+
+        .message-node.receiver {
+            border-color: var(--accent-secondary);
+        }
+
+        .message-node.zk {
+            border-color: var(--success);
+            position: relative;
+        }
+
+        .message-node.zk::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border: 2px solid var(--success);
+            border-radius: 10px;
+            opacity: 0.3;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+
+        .message-node .node-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .message-node .node-value {
+            font-size: 0.875rem;
+            font-weight: 600;
+            font-family: var(--font-mono);
+        }
+
+        .flow-arrow {
+            width: 40px;
+            height: 2px;
+            background: var(--border-color);
+            position: relative;
+        }
+
+        .flow-arrow::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: -4px;
+            width: 0;
+            height: 0;
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+            border-left: 8px solid var(--border-color);
+        }
+
+        .flow-arrow.animating {
+            background: var(--accent-primary);
+        }
+
+        .flow-arrow.animating::after {
+            border-left-color: var(--accent-primary);
+        }
+
+        .zk-proof-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 0.75rem;
+        }
+
+        .zk-proof-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .zk-proof-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .zk-proof-status.verified {
+            color: var(--success);
+        }
+
+        .zk-proof-status.pending {
+            color: var(--warning);
+        }
+
+        .zk-proof-status.failed {
+            color: var(--danger);
+        }
+
+        .zk-proof-hash {
+            font-size: 0.625rem;
+            font-family: var(--font-mono);
+            color: var(--text-secondary);
+            word-break: break-all;
+        }
+
+        .zk-proof-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        .zk-proof-detail {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .zk-proof-detail-label {
+            color: var(--text-secondary);
+            font-size: 0.625rem;
+        }
+
+        .zk-proof-detail-value {
+            font-family: var(--font-mono);
+        }
+
+        .policy-compliance {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .policy-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            font-size: 0.75rem;
+        }
+
+        .policy-item .policy-name {
+            color: var(--text-secondary);
+        }
+
+        .policy-item .policy-status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.625rem;
+            font-weight: 600;
+        }
+
+        .policy-item .policy-status.pass {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .policy-item .policy-status.fail {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        .right-sidebar {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .log-container {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+        }
+
+        .log-entry {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .log-timestamp {
+            color: var(--text-secondary);
+            min-width: 80px;
+        }
+
+        .log-level {
+            min-width: 60px;
+            font-weight: 600;
+        }
+
+        .log-level.info { color: var(--accent-primary); }
+        .log-level.success { color: var(--success); }
+        .log-level.warning { color: var(--warning); }
+        .log-level.error { color: var(--danger); }
+
+        .log-message {
+            flex: 1;
+            word-break: break-word;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .connection-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+        }
+
+        .connection-indicator.connected {
+            background: var(--success);
+            box-shadow: 0 0 10px var(--success);
+        }
+
+        .connection-indicator.disconnected {
+            background: var(--danger);
+        }
+
+        .connection-text {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .connection-text.connected {
+            color: var(--success);
+        }
+
+        .connection-text.disconnected {
+            color: var(--danger);
+        }
+
+        .footer {
+            grid-column: 1 / -1;
+            background: var(--bg-secondary);
+            padding: 1rem 2rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .footer-link {
+            color: var(--accent-primary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-link:hover {
+            color: var(--accent-secondary);
+        }
+
+        .refresh-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+        }
+
+        .zk-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 4px;
+            font-size: 0.625rem;
+            color: var(--accent-primary);
+        }
+
+        .zk-badge.verified {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: var(--success);
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto 1fr auto;
+            }
+
+            .sidebar, .right-sidebar {
+                grid-column: 1 / -1;
+            }
+
+            .main-content {
+                grid-column: 1 / -1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="header">
+            <div>
+                <h1>AgentMesh Swarm Dashboard</h1>
+                <p style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 0.25rem;">
+                    ZK-Verified Agent Communication Layer
+                </p>
+            </div>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Active Agents</span>
+                    <span class="stat-value" id="active-agents">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Messages Secured</span>
+                    <span class="stat-value success" id="messages-secured">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">ZK Proofs Verified</span>
+                    <span class="stat-value success" id="zk-verified">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Network Latency</span>
+                    <span class="stat-value" id="network-latency">-- ms</span>
+                </div>
+            </div>
+        </header>
+
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Agent Swarm</div>
+                <div id="agent-list">
+                    <div class="agent-card" id="agent-orchestrator">
+                        <div class="agent-header">
+                            <span class="agent-name">Orchestrator</span>
+                            <span class="agent-status active"></span>
+                        </div>
+                        <div class="agent-details">
+                            <div>Address: 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb1</div>
+                            <div>Role: Coordinator</div>
+                        </div>
+                        <div class="agent-stats">
+                            <div class="agent-stat">
+                                <div class="agent-stat-value" id="orch-messages">0</div>
+                                <div class="agent-stat-label">Messages</div>
+                            </div>
+                            <div class="agent-stat">
+                                <div class="agent-stat-value" id="orch-latency">0ms</div>
+                                <div class="agent-stat-label">Latency</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">Policy Compliance</div>
+                <div class="policy-item">
+                    <span class="policy-name">No PII Leakage</span>
+                    <span class="policy-status pass">✓ PASS</span>
+                </div>
+                <div class="policy-item">
+                    <span class="policy-name">Max Cost Limit</span>
+                    <span class="policy-status pass">✓ PASS</span>
+                </div>
+                <div class="policy-item">
+                    <span class="policy-name">Signature Verification</span>
+                    <span class="policy-status pass">✓ PASS</span>
+                </div>
+                <div class="policy-item">
+                    <span class="policy-name">Nonce Replay Protection</span>
+                    <span class="policy-status pass">✓ PASS</span>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="flow-container">
+                <div class="flow-section">
+                    <div class="flow-title">
+                        <div class="icon">⚡</div>
+                        Real-Time Message Flow
+                    </div>
+                    <div id="message-flow-container">
+                        <div class="message-flow">
+                            <div class="message-node sender">
+                                <div class="node-label">Sender</div>
+                                <div class="node-value" id="sender-node">Orchestrator</div>
+                            </div>
+                            <div class="flow-arrow" id="flow-arrow-1"></div>
+                            <div class="message-node zk">
+                                <div class="node-label">ZK Proof</div>
+                                <div class="node-value" id="zk-node">Verifying...</div>
+                                <div class="zk-proof-card" id="zk-proof-card">
+                                    <div class="zk-proof-header">
+                                        <div class="zk-proof-status pending" id="zk-status">
+                                            <span class="zk-badge">ZK-VERIFY</span>
+                                            <span id="zk-status-text">Pending</span>
+                                        </div>
+                                        <div class="zk-proof-hash" id="zk-hash">0x...</div>
+                                    </div>
+                                    <div class="zk-proof-details">
+                                        <div class="zk-proof-detail">
+                                            <span class="zk-proof-detail-label">Policy ID</span>
+                                            <span class="zk-proof-detail-value" id="zk-policy-id">--</span>
+                                        </div>
+                                        <div class="zk-proof-detail">
+                                            <span class="zk-proof-detail-label">Nonce</span>
+                                            <span class="zk-proof-detail-value" id="zk-nonce">--</span>
+                                        </div>
+                                        <div class="zk-proof-detail">
+                                            <span class="zk-proof-detail-label">Gas Used</span>
+                                            <span class="zk-proof-detail-value" id="zk-gas">--</span>
+                                        </div>
+                                        <div class="zk-proof-detail">
+                                            <span class="zk-proof-detail-label">Block</span>
+                                            <span class="zk-proof-detail-value" id="zk-block">--</span>
+                                        </div>
+                                    </div>
+                                    <div class="policy-compliance">
+                                        <div class="policy-item">
+                                            <span class="policy-name">PII Check</span>
+                                            <span class="policy-status pass" id="policy-pii">✓</span>
+                                        </div>
+                                        <div class="policy-item">
+                                            <span class="policy-name">Cost Limit</span>
+                                            <span class="policy-status pass" id="policy-cost">✓</span>
+                                        </div>
+                                        <div class="policy-item">
+                                            <span class="policy-name">Signature</span>
+                                            <span class="policy-status pass" id="policy-sig">✓</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flow-arrow" id="flow-arrow-2"></div>
+                            <div class="message-node receiver">
+                                <div class="node-label">Receiver</div>
+                                <div class="node-value" id="receiver-node">Agent-001</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flow-section">
+                    <div class="flow-title">
+                        <div class="icon">📊</div>
+                        Recent Transactions
+                    </div>
+                    <div id="transactions-container">
+                        <div class="zk-proof-card" id="tx-1">
+                            <div class="zk-proof-header">
+                                <div class="zk-proof-status verified">
+                                    <span class="zk-badge verified">✓ VERIFIED</span>
+                                    <span id="tx-1-status">Verified</span>
+                                </div>
+                                <div class="zk-proof-hash" id="tx-1-hash">0x7f3a...9b2c</div>
+                            </div>
+                            <div class="zk-proof-details">
+                                <div class="zk-proof-detail">
+                                    <span class="zk-proof-detail-label">From</span>
+                                    <span class="zk-proof-detail-value" id="tx-1-from">Orchestrator</span>
+                                </div>
+                                <div class="zk-proof-detail">
+                                    <span class="zk-proof-detail-label">To</span>
+                                    <span class="zk-proof-detail-value" id="tx-1-to">Agent-001</span>
+                                </div>
+                                <div class="zk-proof-detail">
+                                    <span class="zk-proof-detail-label">Time</span>
+                                    <span class="zk-proof-detail-value" id="tx-1-time">2024-01-15 14:32:15</span>
+                                </div>
+                                <div class="zk-proof-detail">
+                                    <span class="zk-proof-detail-label">Block</span>
+                                    <span class="zk-proof-detail-value" id="tx-1-block">#18293847</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <aside class="right-sidebar">
+            <div class="connection-status">
+                <div class="connection-indicator" id="ws-indicator"></div>
+                <span class="connection-text" id="ws-text">Disconnected</span>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">System Logs</div>
+                <div class="log-container" id="log-container">
+                    <div class="log-entry">
+                        <span class="log-timestamp">14:32:10</span>
+                        <span class="log-level info">INFO</span>
+                        <span class="log-message">Dashboard initialized</span>
+                    </div>
+                    <div class="log-entry">
+                        <span class="log-timestamp">14:32:11</span>
+                        <span class="log-level info">INFO</span>
+                        <span class="log-message">Connecting to WebSocket...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">Network Stats</div>
+                <div class="agent-stats">
+                    <div class="agent-stat">
+                        <div class="agent-stat-value" id="total-proofs">0</div>
+                        <div class="agent-stat-label">Total Proofs</div>
+                    </div>
+                    <div class="agent-stat">
+                        <div class="agent-stat-value" id="avg-latency">0ms</div>
+                        <div class="agent-stat-label">Avg Latency</div>
+                    </div>
+                    <div class="agent-stat">
+                        <div class="agent-stat-value" id="success-rate">100%</div>
+                        <div class="agent-stat-label">Success Rate</div>
+                    </div>
+                    <div class="agent-stat">
+                        <div class="agent-stat-value" id="gas-saved">0 ETH</div>
+                        <div class="agent-stat-label">Gas Saved</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <button class="refresh-btn" id="refresh-btn">Refresh Data</button>
+            </div>
+        </aside>
+
+        <footer class="footer">
+            <div>AgentMesh Protocol v1.0.0 | ZK-Verified Communication Layer</div>
+            <div class="footer-links">
+                <a href="#" class="footer-link">Documentation</a>
+                <a href="#" class="footer-link">GitHub</a>
+                <a href="#" class="footer-link">Smart Contract</a>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        class SwarmDashboard {
+            constructor() {
+                this.ws = null;
+                this.wsUrl = window.location.hostname === 'localhost' 
+                    ? 'ws://localhost:3000' 
+                    : `ws://${window.location.hostname}:3000`;
+                this.agents = new Map();
+                this.messages = [];
+                this.stats = {
+                    totalMessages: 0,
+                    zkVerified: 0,
+                    totalLatency: 0,
+                    latencyCount: 0,
+                    totalGas: 0,
+                    successCount: 0,
+                    failCount: 0
+                };
+                this.lastUpdate = Date.now();
+                this.init();
+            }
+
+            init() {
+                this.connectWebSocket();
+                this.setupEventListeners();
+                this.startHeartbeat();
+                this.log('INFO', 'Dashboard initialized');
+            }
+
+            connectWebSocket() {
+                this.ws = new WebSocket(this.wsUrl);
+
+                this.ws.onopen = () => {
+                    this.updateConnectionStatus(true);
+                    this.log('INFO', 'WebSocket connected successfully');
+                    this.log('SUCCESS', 'Swarm dashboard online');
+                };
+
+                this.ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        this.handleWebSocketMessage(data);
+                    } catch (error) {
+                        this.log('ERROR', `Failed to parse WebSocket message: ${error.message}`);
+                    }
+                };
+
+                this.ws.onclose = () => {
+                    this.updateConnectionStatus(false);
+                    this.log('WARNING', 'WebSocket disconnected, attempting reconnect...');
+                    setTimeout(() => this.connectWebSocket(), 3000);
+                };
+
+                this.ws.onerror = (error) => {
+                    this.log('ERROR', `WebSocket error: ${error.message}`);
+                };
+            }
+
+            handleWebSocketMessage(data) {
+                switch (data.type) {
+                    case 'message_flow':
+                        this.updateMessageFlow(data.payload);
+                        break;
+                    case 'agent_update':
+                        this.updateAgent(data.payload);
+                        break;
+                    case 'zk_proof':
+                        this.updateZKProof(data.payload);
+                        break;
+                    case 'transaction':
+                        this.addTransaction(data.payload);
+                        break;
+                    case 'stats_update':
+                        this.updateStats(data.payload);
+                        break;
+                    case 'policy_check':
+                        this.updatePolicyCompliance(data.payload);
+                        break;
+                    default:
+                        this.log('INFO', `Received unknown message type: ${data.type}`);
+                }
+            }
+
+            updateMessageFlow(payload) {
+                const { sender, receiver, zkProof, timestamp } = payload;
+
+                document.getElementById('sender-node').textContent = sender;
+                document.getElementById('receiver-node').textContent = receiver;
+                document.getElementById('zk-node').textContent = 'Verifying...';
+
+                const flowArrow1 = document.getElementById('flow-arrow-1');
+                const flowArrow2 = document.getElementById('flow-arrow-2');
+
+                flowArrow1.classList.add('animating');
+                flowArrow2.classList.add('animating');
+
+                setTimeout(() => {
+                    flowArrow1.classList.remove('animating');
+                    flowArrow2.classList.remove('animating');
+                    document.getElementById('zk-node').textContent = 'Verified';
+                }, 1500);
+
+                this.stats.totalMessages++;
+                document.getElementById('messages-secured').textContent = this.stats.totalMessages;
+            }
+
+            updateAgent(payload) {
+                const { id, name, status, messages, latency } = payload;
+
+                let agentCard = document.getElementById(`agent-${id}`);
+                
+                if (!agentCard) {
+                    agentCard = document.createElement('div');
+                    agentCard.className = 'agent-card';
+                    agentCard.id = `agent-${id}`;
+                    agentCard.innerHTML = `
+                        <div class="agent-header">
+                            <span class="agent-name">${name}</span>
+                            <span class="agent-status ${status}"></span>
+                        </div>
+                        <div class="agent-details">
+                            <div>Address: 0x${id.substring(0, 8)}...</div>
+                            <div>Role: ${payload.role || 'Participant'}</div>
+                        </div>
+                        <div class="agent-stats">
+                            <div class="agent-stat">
+                                <div class="agent-stat-value" id="${id}-messages">0</div>
+                                <div class="agent-stat-label">Messages</div>
+                            </div>
+                            <div class="agent-stat">
+                                <div class="agent-stat-value" id="${id}-latency">0ms</div>
+                                <div class="agent-stat-label">Latency</div>
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('agent-list').appendChild(agentCard);
+                }
+
+                const statusEl = agentCard.querySelector('.agent-status');
+                statusEl.className = `agent-status ${status}`;
+
+                const messagesEl = document.getElementById(`${id}-messages`);
+                const latencyEl = document.getElementById(`${id}-latency`);
+
+                if (messagesEl) messagesEl.textContent = messages;
+                if (latencyEl) latencyEl.textContent = `${latency}ms`;
+
+                const activeAgents = document.querySelectorAll('.agent-status.active').length;
+                document.getElementById('active-agents').textContent = activeAgents;
+            }
+
+            updateZKProof(payload) {
+                const { proofHash, policyId, nonce, gasUsed, blockNumber, verified, timestamp } = payload;
+
+                document.getElementById('zk-hash').textContent = proofHash;
+                document.getElementById('zk-policy-id').textContent = policyId;
+                document.getElementById('zk-nonce').textContent = nonce;
+                document.getElementById('zk-gas').textContent = `${gasUsed} gas`;
+                document.getElementById('zk-block').textContent = `#${blockNumber}`;
+
+                const statusEl = document.getElementById('zk-status');
+                const statusTextEl = document.getElementById('zk-status-text');
+                const badgeEl = statusEl.querySelector('.zk-badge
